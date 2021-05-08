@@ -16,8 +16,6 @@ import dash_bootstrap_components as dbc
 from navbar import Navbar
 nav = Navbar()
 
-counter = [0]
-
 with open("df.pkl", "rb") as f:
     datasets = pickle.load(f)
 
@@ -43,9 +41,11 @@ html.Div([
         dcc.Graph(id='app1_graph', figure=go.Figure(),
             style={'width': '98%'}),
         dcc.Markdown('''
-        * Cumulative number of people vaccinated (per hundred) against smoothed number of deaths per day (per million)
+        * Cumulative number of people vaccinated (per hundred) against smoothed number of deaths per day (per million).
 
         * Smoothing is done using [moving average](https://en.wikipedia.org/wiki/Moving_average).
+
+        * Contries with less than 1 million inhabitants were not included in the analysis.
 
         **Source:**
         * https://github.com/owid/covid-19-data/tree/master/public/data
@@ -110,12 +110,6 @@ def register_callbacks1(app):
         ]
     )
     def callbackf(country, smoothf):
-        print((country, smoothf))
-        counter[0] += 1
-        print(counter[0])
-
-
-
         fig = go.Figure()
 
         if not country or not smoothf:

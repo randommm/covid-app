@@ -46,7 +46,8 @@ for location in np.unique(main_df.location):
         fvaccines.append(loc_date_df['people_fully_vaccinated_per_hundred'].item())
 
     df = pd.DataFrame({"deaths": deaths, "vaccines": vaccines,
-        "fvaccines": fvaccines})
+        "fvaccines": fvaccines,
+        'pop_size_in_millions': pop_size_in_millions})
     df.set_index(dates, inplace=True)
     df = df[np.logical_not(df.deaths.isna())]
 

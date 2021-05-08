@@ -10,7 +10,8 @@ import os
 
 #'BOOTSTRAP', 'GRID', '_BOOTSWATCH_BASE', 'CERULEAN', 'COSMO', 'CYBORG', 'DARKLY', 'FLATLY', 'JOURNAL', 'LITERA', 'LUMEN', 'LUX', 'MATERIA', 'MINTY', 'PULSE', 'SANDSTONE', 'SIMPLEX', 'SKETCHY', 'SLATE', 'SOLAR', 'SPACELAB', 'SUPERHERO', 'UNITED', 'YETI'
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SANDSTONE],
-meta_tags=[dict(name="viewport",content="width=1000px, initial-scale=1.0")])
+meta_tags=[dict(name="viewport",content="width=1000px, initial-scale=1.0")]
+)
 app.config.suppress_callback_exceptions = True
 app.title = 'Corona vaccine data'
 server = app.server
@@ -36,7 +37,7 @@ register_callbacks2(app)
 try:
     os.environ['SERVER_SOFTWARE']
 except KeyError:
-    app.run_server(debug=True, port=8011, host='localhost')
+    app.run_server(debug=True, port=8011, host='0.0.0.0')
 else:
     if __name__ == '__main__':
         app.run_server()

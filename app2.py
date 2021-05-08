@@ -18,8 +18,6 @@ from datetime import date, datetime, timedelta
 from navbar import Navbar
 nav = Navbar()
 
-counter = [0]
-
 with open("df.pkl", "rb") as f:
     datasets = pickle.load(f)
 
@@ -44,6 +42,8 @@ html.Div([
             style={'width': '98%'}),
         dcc.Markdown('''
         * Number of people vaccinated (per hundred) against average number of deaths per day (per million).
+
+        * Contries with less than 1 million inhabitants were not included in the analysis.
 
         **Source:**
         * https://github.com/owid/covid-19-data/tree/master/public/data
@@ -101,9 +101,6 @@ def register_callbacks2(app):
         ]
     )
     def callbackf(vac_date, start_date, end_date):
-        counter[0] += 1
-        print(counter[0])
-
         fig = go.Figure()
         if not vac_date or not start_date or not end_date:
             print("empty fig")
