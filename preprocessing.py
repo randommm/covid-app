@@ -20,6 +20,7 @@ datasets = {}
 for location in np.unique(main_df.location):
     deaths = []
     vaccines = []
+    fvaccines = []
     loc_df = main_df[main_df.location==location].copy()
 
     # eliminate contries with small population:
@@ -42,8 +43,10 @@ for location in np.unique(main_df.location):
         loc_date_df = loc_df[loc_df.date == date]
         deaths.append(loc_date_df['total_deaths_per_million'].item())
         vaccines.append(loc_date_df['people_vaccinated_per_hundred'].item())
+        fvaccines.append(loc_date_df['people_fully_vaccinated_per_hundred'].item())
 
-    df = pd.DataFrame({"deaths": deaths, "vaccines": vaccines})
+    df = pd.DataFrame({"deaths": deaths, "vaccines": vaccines,
+        "fvaccines": fvaccines})
     df.set_index(dates, inplace=True)
     df = df[np.logical_not(df.deaths.isna())]
 
@@ -55,11 +58,12 @@ for location in np.unique(main_df.location):
         df.iloc[i, 0] = df.iloc[i, 0].item() - df.iloc[i - 1, 0].item()
 
     # if number of vaccine is NaN, then use previous day
-    if np.isnan(df.iloc[0, 1]):
-        df.iloc[0, 1] = 0
-    for i in range(1, df.shape[0]):
-        if np.isnan(df.iloc[i, 1]):
-            df.iloc[i, 1] = df.iloc[i-1, 1].item()
+    for j in [1,2]:
+        if np.isnan(df.iloc[0, j]):
+            df.iloc[0, j] = 0
+        for i in range(1, df.shape[0]):
+            if np.isnan(df.iloc[i, j]):
+                df.iloc[i, j] = df.iloc[i-1, j].item()
 
     datasets[location] = df
 
