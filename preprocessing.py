@@ -1,72 +1,69 @@
 import numpy as np
 import pandas as pd
 import pickle
+from collections import Counter, OrderedDict
 
 url = 'https://covid.ourworldindata.org/data/owid-covid-data.csv'
-main_df = pd.read_csv(url)
+#url = 'owid-covid-data.csv'
+rec_df = pd.read_csv(url)
 
-# datasets = {}
-# for location in np.unique(main_df.location):
-    # loc_df = main_df[main_df.location==location].copy()
-    # df = pd.DataFrame(columns=("deaths", "vaccines"))
-    # for date in np.unique(loc_df.date):
-        # loc_date_df = loc_df[loc_df.date == date]
-        # deaths = loc_date_df['total_deaths_per_million'].item()
-        # vaccines = loc_date_df['people_vaccinated_per_hundred'].item()
-        # df.loc[date] = [deaths, vaccines]
-    # datasets[location] = df
+rec_df = rec_df[rec_df.iso_code.agg(len)==3]
+rec_df.rename(columns = {
+    'total_deaths_per_million': 'deaths',
+    'people_vaccinated_per_hundred': 'vaccines',
+    'people_fully_vaccinated_per_hundred': 'fvaccines',
+    }, inplace = True)
 
-datasets = {}
+main_df = ['deaths', 'vaccines', 'fvaccines', 'location', 'date']
+main_df = rec_df[main_df]
 for location in np.unique(main_df.location):
-    deaths = []
-    vaccines = []
-    fvaccines = []
-    loc_df = main_df[main_df.location==location].copy()
+    df = main_df[main_df.location==location].copy()
+    dates = np.unique(df.date)
 
-    # eliminate contries with small population:
-    idx = -1
-    try:
-        while True:
-            tc = loc_df.total_cases.iloc[idx]
-            tcpm = loc_df.total_cases_per_million.iloc[idx]
-            if not np.isnan(tc) and not np.isnan(tcpm):
-                break
-            idx -= 1
-    except IndexError:
-        continue
-    pop_size_in_millions = tc/tcpm
-    if pop_size_in_millions < 1:
+    if all(df.deaths.isna()):
+        print("Removing location", location, "as all deaths are nan")
+        main_df = main_df[main_df.location!=location]
         continue
 
-    dates = np.unique(loc_df.date)
-    for date in dates:
-        loc_date_df = loc_df[loc_df.date == date]
-        deaths.append(loc_date_df['total_deaths_per_million'].item())
-        vaccines.append(loc_date_df['people_vaccinated_per_hundred'].item())
-        fvaccines.append(loc_date_df['people_fully_vaccinated_per_hundred'].item())
-
-    df = pd.DataFrame({"deaths": deaths, "vaccines": vaccines,
-        "fvaccines": fvaccines,
-        'pop_size_in_millions': pop_size_in_millions})
-    df.set_index(dates, inplace=True)
-    df = df[np.logical_not(df.deaths.isna())]
-
-    if not len(df):
+    if all(df.vaccines.isna()):
+        print("Removing location", location, "as all vaccines are nan")
+        main_df = main_df[main_df.location!=location]
         continue
 
     # de-accumulate deaths (i.e.: get daily deaths)
     for i in range(df.shape[0]-1, 0, -1):
-        df.iloc[i, 0] = df.iloc[i, 0].item() - df.iloc[i - 1, 0].item()
+        ci = np.where(df.columns == 'deaths')[0].item()
+        past = df.iloc[i - 1, ci].item()
+        if np.isnan(past):
+            continue
+        df.iloc[i, ci] = df.iloc[i, ci].item() - past
 
     # if number of vaccine is NaN, then use previous day
-    for j in [1,2]:
-        if np.isnan(df.iloc[0, j]):
-            df.iloc[0, j] = 0
+    for cname in ['vaccines', 'fvaccines']:
+        ci = np.where(df.columns == cname)[0].item()
+        if np.isnan(df.iloc[0, ci]):
+            df.iloc[0, ci] = 0
         for i in range(1, df.shape[0]):
-            if np.isnan(df.iloc[i, j]):
-                df.iloc[i, j] = df.iloc[i-1, j].item()
+            if np.isnan(df.iloc[i, ci]):
+                df.iloc[i, ci] = df.iloc[i-1, ci].item()
 
-    datasets[location] = df
+    main_df[main_df.location==location] = df
 
-with open("df.pkl", "wb") as f:
-    pickle.dump(datasets, f)
+with open("main_df.pkl", "wb") as f:
+    pickle.dump(main_df, f)
+
+locations = rec_df.location.unique()
+df_vars = []
+for location in locations:
+    dfl = rec_df[rec_df.location==location].copy()
+    dfl.pop('location')
+    dfld = dict(location=location)
+    for column in dfl.columns:
+        if len(Counter(dfl[column])) == 1 and not dfl[column].iloc[[0]].isna().item():
+            dfld[column] = dfl[column].iloc[0]
+    df_vars.append(dfld)
+df_vars = pd.DataFrame(df_vars)
+
+
+with open("df_vars.pkl", "wb") as f:
+    pickle.dump(df_vars, f)

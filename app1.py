@@ -16,19 +16,27 @@ import dash_bootstrap_components as dbc
 from navbar import Navbar
 nav = Navbar()
 
-with open("df.pkl", "rb") as f:
-    datasets = pickle.load(f)
+with open("main_df.pkl", "rb") as f:
+    main_df = pickle.load(f)
 
-countries = list(datasets.keys())
+with open("df_vars.pkl", "rb") as f:
+    df_vars = pickle.load(f)
+
+countries = list(main_df.location.unique())
 n_vaccines = {}
 for country in countries:
-    if len(datasets[country]):
-        nv = datasets[country].iloc[-1,1]
-        if nv >= 2:
-            n_vaccines[country] = nv
+    nv = main_df[main_df.location == country]
+    nv = nv.iloc[-1].vaccines
+    if nv >= 2:
+        n_vaccines[country] = nv
 
 countries = sorted(n_vaccines.items(), key=lambda x:x[1], reverse=True)
 countries = [x[0] for x in countries]
+countries_large = [
+    c for c in countries
+    if df_vars.loc[df_vars.location==c, 'population'].item()
+    > 1_000_000
+]
 
 def smoother(series, N):
     res = pd.DataFrame(series).rolling(N,center=True).mean()
@@ -41,11 +49,9 @@ html.Div([
         dcc.Graph(id='app1_graph', figure=go.Figure(),
             style={'width': '98%'}),
         dcc.Markdown('''
-        * Cumulative number of people vaccinated (per hundred) against smoothed number of deaths per day (per million).
+        * Cumulative percentage of people vaccinated against smoothed number of deaths per day (per million).
 
         * Smoothing is done using [moving average](https://en.wikipedia.org/wiki/Moving_average).
-
-        * Contries with less than 1 million inhabitants were not included in the analysis.
 
         **Source:**
         * https://github.com/owid/covid-19-data/tree/master/public/data
@@ -68,10 +74,19 @@ html.Div([
             id='app1_smoothf',
         ),
 
+        dcc.Checklist(
+            options=[
+                {'label': 'Include low population contries', 'value': 'yes'},
+            ],
+            value=[],
+            id='app1_smallstate',
+        ),
+
+
         dcc.Markdown('''
         ## Country:
         '''),
-        html.Div([
+        html.Div(children=[
         dcc.RadioItems(
             id='app1_country',
             options=[
@@ -84,7 +99,7 @@ html.Div([
         '-webkit-column-count': '5',
         '-moz-column-count': '5',
         'column-count': '5',
-        }),
+        }, id='app1_country_div'),
 
     ],
     style={'min-width': '250px', 'max-width': '500px'}
@@ -103,6 +118,31 @@ def App1():
 
 def register_callbacks1(app):
     @app.callback(
+        Output('app1_country_div', 'children'),
+        [
+           Input('app1_smallstate', 'value'),
+        ],
+        State('app1_country', 'value'),
+    )
+    def callbackf(smallstate, cur_location):
+        fig = go.Figure()
+
+        if smallstate:
+            countries_sel = countries
+        else:
+            countries_sel = countries_large
+
+        return dcc.RadioItems(
+            id='app1_country',
+            options=[
+                {'label': k, 'value': k} for k in countries_sel
+            ],
+            value=cur_location,
+            labelStyle={'display': 'block'}
+        )
+
+
+    @app.callback(
         Output(component_id='app1_graph', component_property='figure'),
         [
            Input('app1_country', 'value'),
@@ -115,7 +155,8 @@ def register_callbacks1(app):
         if not country or not smoothf:
             return fig
 
-        df = datasets[country].copy()
+        df = main_df[main_df.location == country].copy()
+        df.set_index('date')
         if smoothf > 1:
             index = df.index
             df.deaths = smoother(df.deaths, smoothf)
