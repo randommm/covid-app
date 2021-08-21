@@ -156,23 +156,25 @@ def register_callbacks1(app):
             return fig
 
         df = main_df[main_df.location == country].copy()
+        df.date = np.array([datetime.strptime(d,"%Y-%m-%d") for d in df.date])
         df.set_index('date')
         if smoothf > 1:
-            index = df.index
-            df.deaths = smoother(df.deaths, smoothf)
+            smoothed = smoother(df.deaths, smoothf)
+            df = df.loc[smoothed.index]
+            df.deaths = smoothed
             add_text = ''
         else:
             add_text = ' [smoothed]'
 
-        fig.add_trace(go.Scatter(x=df.index, y=df.deaths,
+        fig.add_trace(go.Scatter(x=df.date, y=df.deaths,
                     mode='lines+markers',
                     name='Death Covid'+add_text))
 
-        fig.add_trace(go.Scatter(x=df.index, y=df.vaccines,
+        fig.add_trace(go.Scatter(x=df.date, y=df.vaccines,
                     mode='lines+markers',
                     name='Prop vaccinated Covid'))
 
-        fig.add_trace(go.Scatter(x=df.index, y=df.fvaccines,
+        fig.add_trace(go.Scatter(x=df.date, y=df.fvaccines,
                     mode='lines+markers',
                     name='Prop fully vaccinated Covid'))
 

@@ -15,7 +15,7 @@ rec_df.rename(columns = {
     }, inplace = True)
 
 main_df = ['deaths', 'vaccines', 'fvaccines', 'location', 'date']
-main_df = rec_df[main_df]
+main_df = rec_df[main_df].copy()
 for location in np.unique(main_df.location):
     df = main_df[main_df.location==location].copy()
     dates = np.unique(df.date)
