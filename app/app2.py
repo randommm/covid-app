@@ -9,8 +9,8 @@ import os
 import plotly.graph_objects as go
 import plotly.express as px
 import dash
-import dash_html_components as html
-import dash_core_components as dcc
+from dash import html
+from dash import dcc
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from datetime import date, datetime, timedelta

@@ -8,8 +8,8 @@ import os
 
 import plotly.graph_objects as go
 import dash
-import dash_html_components as html
-import dash_core_components as dcc
+from dash import html
+from dash import dcc
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 
@@ -96,13 +96,13 @@ html.Div([
             labelStyle={'display': 'block'}
         ),
         ], style={
-        '-webkit-column-count': '5',
-        '-moz-column-count': '5',
-        'column-count': '5',
+        '-webkit-column-count': '6',
+        '-moz-column-count': '6',
+        'column-count': '6',
         }, id='app1_country_div'),
 
     ],
-    style={'min-width': '250px', 'max-width': '500px'}
+    style={'min-width': '250px', 'max-width': '700px'}
     ),
 ],
 style={'display': 'flex'}

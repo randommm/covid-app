@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: covid-app-deployment
+  labels:
+    app: covid-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: covid-app
+  template:
+    metadata:
+      labels:
+        app: covid-app
+    spec:
+      volumes:
+        - name: nginx-covid-app-conf
+          configMap:
+            name: nginx-covid-app-conf
+            items:
+            - key: "nginx-conf"
+              path: "nginx.conf"
+        - name: socks-volume
+          emptyDir: {}
+        - name: log
+          emptyDir: {}
+        - name: staticfiles-volume
+          emptyDir: {}
+
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - name: socks-volume
+            mountPath: "/socks_volume"
+          - name: nginx-covid-app-conf
+            mountPath: /etc/nginx/conf.d/default.conf
+            subPath: nginx.conf
+            readOnly: true
+          - name: log
+            mountPath: /var/log/nginx
+          - name: staticfiles-volume
+            mountPath: "/app/assets"
+
+      - name: covid-app
+        image: us-docker.pkg.dev/eminent-citadel-160917/gcr.io/covid-app:0.1
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - >-
+              cd /app &&
+              poetry run gunicorn index:server --workers 3 --log-file - -b unix:/socks_volume/gunicorn.sock
+        volumeMounts:
+          - name: socks-volume
+            mountPath: "/socks_volume"
+          - name: staticfiles-volume
+            mountPath: "/app/assets"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: covid-app-service
+spec:
+  type: ClusterIP
+  selector:
+    app: covid-app
+  ports:
+  - name: covid-app-nginx
+    protocol: TCP
+    port: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-covid-app-conf
+data:
+  nginx-conf: |
+
+    server {
+
+      listen 80;
+      server_name  localhost;
+
+        location /assets/ {
+            root /app;
+        }
+
+        location / {
+          proxy_set_header Host $http_host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_pass http://unix:/socks_volume/gunicorn.sock;
+        }
+
+    }
