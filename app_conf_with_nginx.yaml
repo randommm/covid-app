@@ -5,7 +5,7 @@ metadata:
   labels:
     app: covid-app
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: covid-app
@@ -14,6 +14,8 @@ spec:
       labels:
         app: covid-app
     spec:
+      imagePullSecrets:
+      - name: regcred
       volumes:
         - name: nginx-covid-app-conf
           configMap:
@@ -46,18 +48,31 @@ spec:
             mountPath: "/app/assets"
 
       - name: covid-app
-        image: us-docker.pkg.dev/eminent-citadel-160917/gcr.io/covid-app:0.1
+        image: marcoinacio/covid-app:0.1
         command: ["/bin/bash"]
         args:
           - -c
           - >-
               cd /app &&
-              poetry run gunicorn index:server --workers 3 --log-file - -b unix:/socks_volume/gunicorn.sock
+              poetry run gunicorn index:server --workers 5 --log-file - -b unix:/socks_volume/gunicorn.sock
         volumeMounts:
           - name: socks-volume
             mountPath: "/socks_volume"
           - name: staticfiles-volume
             mountPath: "/app/assets"
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
 ---
 apiVersion: v1
 kind: Service
