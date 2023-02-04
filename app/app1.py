@@ -53,8 +53,9 @@ html.Div([
 
         * Smoothing is done using [moving average](https://en.wikipedia.org/wiki/Moving_average).
 
-        **Source:**
-        * https://github.com/owid/covid-19-data/tree/master/public/data
+        * Source-code available at https://github.com/randommm/covid-app
+
+        * Data source available at https://github.com/owid/covid-19-data/tree/master/public/data
         ''',
 
         style={'flex-grow': 1, 'margin': '-1px 50px 10px 20px'})

@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import pickle
 from collections import Counter, OrderedDict
+import os
+fpath = os.path.dirname(os.path.realpath(__file__))
 
 url = 'https://covid.ourworldindata.org/data/owid-covid-data.csv'
 #url = 'owid-covid-data.csv'
@@ -49,7 +51,7 @@ for location in np.unique(main_df.location):
 
     main_df[main_df.location==location] = df
 
-with open("main_df.pkl", "wb") as f:
+with open(f"{fpath}/main_df.pkl", "wb") as f:
     pickle.dump(main_df, f)
 
 locations = rec_df.location.unique()
@@ -65,5 +67,5 @@ for location in locations:
 df_vars = pd.DataFrame(df_vars)
 
 
-with open("df_vars.pkl", "wb") as f:
+with open(f"{fpath}/df_vars.pkl", "wb") as f:
     pickle.dump(df_vars, f)

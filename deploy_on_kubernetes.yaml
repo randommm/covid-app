@@ -48,7 +48,7 @@ spec:
             mountPath: "/app/assets"
 
       - name: covid-app
-        image: marcoinacio/covid-app:0.1
+        image: marcoinacio/covid-app:1.0
         command: ["/bin/bash"]
         args:
           - -c
