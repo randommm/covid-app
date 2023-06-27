@@ -8,3 +8,4 @@ plots/
 *.sqlite3
 *.pkl
 *.log
+*.sock

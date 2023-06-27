@@ -1,0 +1,7 @@
+services:
+    covid-app:
+        container_name: covid-app
+        image: ghcr.io/randommm/covid-app
+        restart: always
+        ports:
+            - "127.0.0.1:62081:8081"
