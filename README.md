@@ -2,7 +2,7 @@ Code for app hosted at https://covid.marcoinacio.com
 
 # Serve on localhost
 
-To serve a copy on localhost:62081 run:
+To serve a copy on localhost:8081 run:
 
 `poetry install`
 
