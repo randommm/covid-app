@@ -5,7 +5,7 @@ from collections import Counter, OrderedDict
 import os
 fpath = os.path.dirname(os.path.realpath(__file__))
 
-url = 'https://covid.ourworldindata.org/data/owid-covid-data.csv'
+url = 'https://web.archive.org/web/20230608153812if_/https://covid.ourworldindata.org/data/owid-covid-data.csv'
 #url = 'owid-covid-data.csv'
 rec_df = pd.read_csv(url)
 
